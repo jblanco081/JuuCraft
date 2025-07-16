@@ -1,0 +1,14 @@
+[
+{
+  "directory": "D:/Ju'sCraft/build",
+  "command": "D:\\Msys2\\mingw64\\bin\\g++.exe -I\"D:/Ju'sCraft/external/glfw/include\" -I\"D:/Ju'sCraft/external/glad/include\" -g -std=gnu++17 -o CMakeFiles\\MinecraftClone.dir\\src\\main.cpp.obj -c \"D:\\Ju'sCraft\\src\\main.cpp\"",
+  "file": "D:\\Ju'sCraft\\src\\main.cpp",
+  "output": "CMakeFiles\\MinecraftClone.dir\\src\\main.cpp.obj"
+},
+{
+  "directory": "D:/Ju'sCraft/build",
+  "command": "D:\\Msys2\\mingw64\\bin\\gcc.exe -I\"D:/Ju'sCraft/external/glfw/include\" -I\"D:/Ju'sCraft/external/glad/include\" -g -o CMakeFiles\\MinecraftClone.dir\\external\\glad\\src\\glad.c.obj -c \"D:\\Ju'sCraft\\external\\glad\\src\\glad.c\"",
+  "file": "D:\\Ju'sCraft\\external\\glad\\src\\glad.c",
+  "output": "CMakeFiles\\MinecraftClone.dir\\external\\glad\\src\\glad.c.obj"
+}
+]

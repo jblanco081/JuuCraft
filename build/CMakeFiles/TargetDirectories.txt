@@ -1,0 +1,3 @@
+D:/Ju'sCraft/build/CMakeFiles/MinecraftClone.dir
+D:/Ju'sCraft/build/CMakeFiles/edit_cache.dir
+D:/Ju'sCraft/build/CMakeFiles/rebuild_cache.dir

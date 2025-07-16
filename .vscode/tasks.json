@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build main.cpp",
+            "type": "shell",
+            "command": "D:/Msys2/mingw64/bin/g++.exe",
+            "args": [
+                "-I",
+                "D:/JuuCraft/external/glfw/include",
+                "-I",
+                "D:/JuuCraft/external/glad/include",
+                "-g",
+                "D:/JuuCraft/src/main.cpp",
+                "-o",
+                "D:/JuuCraft/build/MinecraftClone.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}
