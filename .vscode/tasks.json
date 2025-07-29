@@ -2,23 +2,33 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build main.cpp",
+            "label": "build",
             "type": "shell",
             "command": "D:/Msys2/mingw64/bin/g++.exe",
             "args": [
-                "-I",
-                "D:/JuuCraft/external/glfw/include",
-                "-I",
-                "D:/JuuCraft/external/glad/include",
                 "-g",
-                "D:/JuuCraft/src/main.cpp",
+                "${file}",
+                "Shader.cpp",
+                "Camera.cpp",
+                "stb_image.cpp",
+                "D:/JuuCraft/include/src/glad.c",
+                "-I",
+                "D:/JuuCraft/include",
+                "-I",
+                "D:/JuuCraft/include/glm-1.0.1",
                 "-o",
-                "D:/JuuCraft/build/MinecraftClone.exe"
+                "${workspaceFolder}/build/MinecraftClone.exe",
+                "-lglfw3",
+                "-lgdi32",
+                "-lopengl32"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
+            "options": {
+                "env": {
+                    "CPLUS_INCLUDE_PATH": "D:/vcpkg/installed/x64-mingw-static/include",
+                    "LIBRARY_PATH": "D:/vcpkg/installed/x64-mingw-static/lib"
+                }
             },
+            "group": "build",
             "problemMatcher": [
                 "$gcc"
             ]
