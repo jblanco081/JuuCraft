@@ -15,7 +15,7 @@
                 "-I",
                 "D:/JuuCraft/include",
                 "-I",
-                "D:/JuuCraft/include/glm-1.0.1",
+                "D:/JuuCraft/include/glm-0.9.9.8",
                 "-o",
                 "${workspaceFolder}/build/MinecraftClone.exe",
                 "-lglfw3",
