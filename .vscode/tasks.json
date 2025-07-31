@@ -7,9 +7,10 @@
             "command": "D:/Msys2/mingw64/bin/g++.exe",
             "args": [
                 "-g",
-                "${file}",
                 "Shader.cpp",
                 "Camera.cpp",
+                "main.cpp",
+                "Chunk.cpp",
                 "stb_image.cpp",
                 "D:/JuuCraft/include/src/glad.c",
                 "-I",

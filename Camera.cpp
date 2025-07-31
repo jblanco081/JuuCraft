@@ -2,10 +2,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h> 
+#include <iostream>
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
     : Position(position), WorldUp(up), Yaw(yaw), Pitch(pitch),
-      Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(2.5f),
+      Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(10.0f),
       MouseSensitivity(0.1f), Zoom(45.0f) {
     
     updateCameraVectors();
@@ -16,6 +17,8 @@ glm::mat4 Camera::GetViewMatrix() {
 }
 
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+    std::cout << "Camera Position: " << Position.x << ", " << Position.y << ", " << Position.z << std::endl;
+    
     float velocity = MovementSpeed * deltaTime;
     if (direction == FORWARD)
         Position += Front * velocity;

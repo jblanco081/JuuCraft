@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <glm/gtc/type_ptr.hpp>
+#include "Chunk.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -50,6 +51,8 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 
@@ -70,19 +73,29 @@ int main() {
     unsigned int VBO;
     unsigned int EBO;
     int success;
-    char infoLog[512];
 
-    float vertices [] = {
-            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
-        };   
+    float vertices[] = { 
+    // positions          // colors           // texture coords
+    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,    0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,    1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,    0.0f, 1.0f,
+
+    -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,    1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,    1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.2f, 0.5f, 0.3f,    0.0f, 1.0f
+    };
 
     unsigned int indices[] = {
-            0, 1, 3, //first triangle
-            1, 2, 3, //second triangle
-        };
+    0, 1, 2, 2, 3, 0,  // back face
+    4, 5, 6, 6, 7, 4,  // front face
+    4, 5, 1, 1, 0, 4,  // bottom face
+    6, 7, 3, 3, 2, 6,  // top face
+    4, 7, 3, 3, 0, 4,  // left face
+    5, 6, 2, 2, 1, 5   // right face
+    };
+
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -117,20 +130,27 @@ int main() {
 
     unsigned int textureID = loadTexture("texture");
     glEnable(GL_DEPTH_TEST);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    if(glfwRawMouseMotionSupported()) {
+        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
 
 
     shader.use();
     shader.setInt("texture1", 0);
 
+    camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
+
+    Chunk chunk({0, 0, 0});  // Create chunk at world chunk coords (0,0,0)
+    chunk.generateTerrain(); // Generate voxel data inside that chunk
 
     while (!glfwWindowShouldClose(window)) {
     // Update time
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+
 
     processInput(window);
 
@@ -156,7 +176,7 @@ int main() {
 
     // Draw
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
 
@@ -203,8 +223,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    std::cout << "Mouse moved to: " << xposIn << ", " << yposIn << std::endl;
+
+    
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
     if (firstMouse)
@@ -220,7 +242,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    camera.ProcessMouseMovement(xoffset, yoffset, true);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
@@ -238,9 +260,9 @@ unsigned int loadTexture(char const * path)
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
+    stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data)
-    {
+    if (data) {
         GLenum format;
         if (nrComponents == 1)
             format = GL_RED;
@@ -255,7 +277,7 @@ unsigned int loadTexture(char const * path)
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
