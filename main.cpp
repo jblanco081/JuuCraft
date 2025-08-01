@@ -9,13 +9,9 @@
 #include <string>
 #include <glm/gtc/type_ptr.hpp>
 #include "Chunk.h"
-
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
-unsigned int loadTexture(const char *path);
+#include <InputManager.h>
+#include "TextureManager.h"
+#include "WindowManager.h"
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -23,9 +19,7 @@ const unsigned int SCR_HEIGHT = 600;
 
 // camera
 Camera camera;
-float lastX = (float)SCR_WIDTH / 2.0;
-float lastY = (float)SCR_HEIGHT / 2.0;
-bool firstMouse = true;
+InputManager inputManager(camera, SCR_WIDTH, SCR_HEIGHT);
 
 // timing
 float deltaTime = 0.0f;
@@ -51,8 +45,8 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetCursorPosCallback(window, InputManager::MouseCallback);
+    glfwSetScrollCallback(window, InputManager::ScrollCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 
@@ -61,75 +55,17 @@ int main() {
         return -1;
     }
 
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, WindowManager::framebuffer_size_callback);
 
     Shader shader("../shaders/shader.vs", "../shaders/shader.fs");
 
-
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    unsigned int shaderProgram;
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
-    int success;
-
-    float vertices[] = { 
-    // positions          // colors           // texture coords
-    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,    0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,    1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,    0.0f, 1.0f,
-
-    -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,    1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,    1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.2f, 0.5f, 0.3f,    0.0f, 1.0f
-    };
-
-    unsigned int indices[] = {
-    0, 1, 2, 2, 3, 0,  // back face
-    4, 5, 6, 6, 7, 4,  // front face
-    4, 5, 1, 1, 0, 4,  // bottom face
-    6, 7, 3, 3, 2, 6,  // top face
-    4, 7, 3, 3, 0, 4,  // left face
-    5, 6, 2, 2, 1, 5   // right face
-    };
-
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof (vertices), vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    GLuint textureID = TextureManager::LoadTexture("../textures/blocks/grass.png");
     
-    //position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 
-                    (void*)0);
-    glEnableVertexAttribArray(0);
-
-    //color
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 
-                    (void*) (3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    //texture coord
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 
-                    (void*) (6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-
-
-    unsigned int textureID = loadTexture("texture");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    
     glEnable(GL_DEPTH_TEST);
+    
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if(glfwRawMouseMotionSupported()) {
@@ -145,6 +81,9 @@ int main() {
     Chunk chunk({0, 0, 0});  // Create chunk at world chunk coords (0,0,0)
     chunk.generateTerrain(); // Generate voxel data inside that chunk
 
+    Mesh mesh({}, {});
+    chunk.generateMesh(mesh);
+
     while (!glfwWindowShouldClose(window)) {
     // Update time
     float currentFrame = glfwGetTime();
@@ -152,14 +91,11 @@ int main() {
     lastFrame = currentFrame;
 
 
-    processInput(window);
+    inputManager.ProcessKeyboard(window, deltaTime);
 
     // Clear screen
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    shader.use();
-
 
     // Camera matrices
     glm::mat4 view = camera.GetViewMatrix();
@@ -171,14 +107,7 @@ int main() {
     shader.setMat4("projection", projection);
     shader.setMat4("model", model);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Draw
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-
+    mesh.Draw(textureID);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -189,104 +118,6 @@ int main() {
     glfwDestroyWindow(window);
     glfwTerminate();
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-
     return 0;
 
-}
-
-void processInput(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
-
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-    std::cout << "Mouse moved to: " << xposIn << ", " << yposIn << std::endl;
-
-    
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset, true);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
-}
-
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
-unsigned int loadTexture(char const * path)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-
-    int width, height, nrComponents;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data) {
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
-    }
-    else
-    {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
-        stbi_image_free(data);
-    }
-
-    return textureID;
 }
