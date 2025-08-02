@@ -159,3 +159,9 @@ void Mesh::addFace(glm::vec3 blockPos, FaceDirection face) {
 
     ::addFace(vertices, indices, blockPos, faceNormal, *faceVertices, uvTopLeft, uvBottomRight, indexOffset);
 }
+
+Mesh::~Mesh() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}

@@ -1,6 +1,3 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <iostream>
 #include <Shader.h>
 #include <Camera.h>
@@ -12,10 +9,7 @@
 #include <InputManager.h>
 #include "TextureManager.h"
 #include "WindowManager.h"
-
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+#include "Config.h"
 
 // camera
 Camera camera;
@@ -27,52 +21,15 @@ float lastFrame = 0.0f;
 
 int main() {
 
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Learn OpenGL", NULL, NULL);
-
-    if (window == NULL) {
-
-        std::cout << "Failed to create GLFW window" << std::endl;
-
-        glfwTerminate();
-
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    glfwSetCursorPosCallback(window, InputManager::MouseCallback);
-    glfwSetScrollCallback(window, InputManager::ScrollCallback);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-
-        std::cout << "Failed to initialize GLAD" << std::endl;
-
-        return -1;
-    }
-
-    glfwSetFramebufferSizeCallback(window, WindowManager::framebuffer_size_callback);
-
+    GLFWwindow* window = WindowManager::Init(SCR_WIDTH, SCR_HEIGHT, "JuuCraft");
+    
     Shader shader("../shaders/shader.vs", "../shaders/shader.fs");
 
     GLuint textureID = TextureManager::LoadTexture("../textures/blocks/grass.png");
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    
-    glEnable(GL_DEPTH_TEST);
-    
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    if(glfwRawMouseMotionSupported()) {
-        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    }
-
-
+        
     shader.use();
     shader.setInt("texture1", 0);
 

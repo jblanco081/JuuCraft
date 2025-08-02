@@ -16,6 +16,7 @@
                 "D:/JuuCraft/src/Chunk.cpp",
                 "D:/JuuCraft/src/stb_image.cpp",
                 "D:/JuuCraft/include/src/glad.c",
+                "D:/JuuCraft/src/InputManager.cpp",
                 "-I",
                 "D:/JuuCraft/include",
                 "-I",
